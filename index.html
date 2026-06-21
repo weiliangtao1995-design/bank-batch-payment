@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>銀行整批付款上傳檔產生器 · Anivance</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Anivance 品牌色（淺色模式）*/
+  --bg:           #F2F4F8;
+  --bg-2:         #EAECF2;
+  --border:       #ECECEC;
+  --border-glow:  rgba(64,220,255,0.4);
+  --accent-1:     #068bff;
+  --accent-2:     #40DCFF;
+  --grad:         linear-gradient(90deg, #40DCFF 0%, #068bff 100%);
+  --grad-rev:     linear-gradient(90deg, #068bff 0%, #40DCFF 100%);
+  --text:         #0A0A0A;
+  --text-sub:     #515151;
+  --text-muted:   #a0a0a0;
+  --success:      #00C853;
+  --error:        #FB2C36;
+  --warning:      #F59E0B;
+  --row-err-bg:   rgba(251,44,54,0.05);
+  --row-ok-bg:    rgba(0,200,83,0.06);
+  --row-ins-bg:   rgba(245,158,11,0.07);
+  --radius:       14px;
+  --radius-sm:    8px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Microsoft JhengHei', '微軟正黑體', 'Noto Sans TC', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+header {
+  position: relative;
+  z-index: 10;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+  padding: 0 40px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-logo {
+  width: 32px; height: 32px;
+  background: var(--grad);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 900; color: #fff;
+  letter-spacing: -1px;
+  flex-shrink: 0;
+}
+.header-title {
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+.header-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.header-logo {
+  box-shadow: 0 2px 10px rgba(6,139,255,0.3);
+}
+.header-title {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 36px 28px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────── */
+.card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.card:hover {
+  border-color: rgba(64,220,255,0.35);
+  box-shadow: 0 2px 8px rgba(6,139,255,0.08), 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.step-badge {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--grad);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(6,139,255,0.35);
+}
+
+/* ── Upload ───────────────────────────────────────────────────────────────── */
+.upload-area {
+  border: 1.5px dashed rgba(64,220,255,0.5);
+  border-radius: var(--radius-sm);
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(64,220,255,0.04);
+  transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+.upload-area:hover, .upload-area.drag-over {
+  background: rgba(6,139,255,0.05);
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 4px rgba(64,220,255,0.12);
+}
+.upload-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.7; }
+.upload-label { font-size: 14px; color: var(--text-sub); }
+.upload-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.upload-status {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--success);
+  font-weight: 600;
+  line-height: 1.7;
+}
+.upload-status.error { color: var(--error); }
+
+/* ── Date input ───────────────────────────────────────────────────────────── */
+.date-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.date-row label {
+  font-size: 13px;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+.date-row input {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  width: 180px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.date-row input::placeholder { color: var(--text-muted); }
+.date-row input:focus {
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(64,220,255,0.2);
+  background: #fff;
+}
+.date-hint { font-size: 12px; color: var(--text-muted); }
+
+/* ── Detail table ─────────────────────────────────────────────────────────── */
+.detail-table-wrapper { overflow-x: auto; }
+
+table.input-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 480px;
+}
+table.input-table th {
+  background: rgba(64,220,255,0.08);
+  color: var(--accent-1);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 2px solid rgba(6,139,255,0.15);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+table.input-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 3px 6px;
+  vertical-align: middle;
+}
+table.input-table tbody tr:hover td { background: rgba(64,220,255,0.04); }
+table.input-table td input {
+  border: none;
+  width: 100%;
+  padding: 7px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: transparent;
+  outline: none;
+  color: var(--text);
+}
+table.input-table td input::placeholder { color: var(--text-muted); }
+table.input-table td input:focus {
+  background: rgba(64,220,255,0.07);
+  border-radius: 4px;
+}
+table.input-table td.row-num {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: center;
+  width: 56px;
+  user-select: none;
+  padding: 0 6px;
+}
+.row-num-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.row-cb {
+  width: 14px; height: 14px;
+  cursor: pointer;
+  accent-color: var(--accent-1);
+  flex-shrink: 0;
+  margin: 0;
+}
+table.input-table thead th:first-child {
+  text-align: center;
+}
+#selectAllCb {
+  width: 14px; height: 14px;
+  cursor: pointer;
+  accent-color: var(--accent-1);
+  margin: 0;
+}
+table.input-table tr.row-selected td {
+  background: rgba(6,139,255,0.05) !important;
+}
+
+/* ── Floating row toolbar ─────────────────────────────────────────────────── */
+.float-toolbar {
+  position: fixed;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+}
+.float-toolbar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 8px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-sub);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  min-width: 48px;
+  letter-spacing: 0.3px;
+}
+.float-toolbar-btn .ftb-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+.float-toolbar-btn:hover {
+  background: rgba(6,139,255,0.07);
+  border-color: rgba(6,139,255,0.3);
+  color: var(--accent-1);
+}
+.float-toolbar-btn.danger:hover {
+  background: rgba(251,44,54,0.06);
+  border-color: rgba(251,44,54,0.3);
+  color: var(--error);
+}
+.float-toolbar-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 3px 0;
+}
+@media (max-width: 900px) {
+  .float-toolbar { display: none; }
+}
+
+.add-row-btn {
+  margin-top: 12px;
+  background: transparent;
+  border: 1.5px dashed rgba(6,139,255,0.35);
+  color: var(--accent-1);
+  border-radius: var(--radius-sm);
+  padding: 8px 22px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+.add-row-btn:hover {
+  background: rgba(64,220,255,0.08);
+  border-color: var(--accent-2);
+}
+.paste-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.run-btn {
+  background: var(--grad);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 44px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 4px 20px rgba(6,139,255,0.3);
+}
+.run-btn:hover {
+  opacity: 0.92;
+  box-shadow: 0 6px 28px rgba(6,139,255,0.45);
+  transform: translateY(-1px);
+}
+.run-btn:active { transform: translateY(0); }
+.run-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.repreview-btn {
+  background: #fffbeb;
+  color: var(--warning);
+  border: 1.5px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  padding: 10px 28px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.repreview-btn:hover {
+  background: #fef3c7;
+  box-shadow: 0 2px 12px rgba(217,119,6,0.2);
+}
+
+.download-btn {
+  background: #ecfdf5;
+  color: var(--success);
+  border: 1.5px solid #6ee7b7;
+  border-radius: var(--radius-sm);
+  padding: 10px 36px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.download-btn:hover {
+  background: #d1fae5;
+  box-shadow: 0 2px 12px rgba(5,150,105,0.2);
+}
+
+.btn-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filename-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Preview section ──────────────────────────────────────────────────────── */
+#preview-section { display: none; }
+
+.preview-info {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin-bottom: 14px;
+  padding: 10px 16px;
+  background: rgba(64,220,255,0.07);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent-1);
+}
+.preview-info span.count { color: var(--accent-1); font-weight: 700; }
+.preview-info span.err   { color: var(--error);    font-weight: 700; }
+
+.preview-table-wrapper { overflow-x: auto; margin-top: 4px; }
+
+table.preview-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 1100px;
+  width: 100%;
+}
+table.preview-table th {
+  background: linear-gradient(90deg, rgba(64,220,255,0.12), rgba(6,139,255,0.08));
+  color: var(--accent-1);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 10px 10px;
+  white-space: nowrap;
+  border-bottom: 2px solid rgba(6,139,255,0.15);
+  position: sticky; top: 0; z-index: 2;
+}
+table.preview-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 5px 7px;
+  vertical-align: middle;
+  color: var(--text);
+}
+table.preview-table tbody tr:hover td { background: rgba(64,220,255,0.04); }
+table.preview-table td[contenteditable="true"] {
+  min-width: 64px;
+  cursor: text;
+  border-radius: 4px;
+  transition: background 0.15s, outline 0.15s;
+}
+table.preview-table td[contenteditable="true"]:focus {
+  outline: 2px solid var(--accent-1);
+  background: rgba(64,220,255,0.08);
+}
+
+/* Error / OK rows */
+table.preview-table tr.row-error td { background: var(--row-err-bg); }
+table.preview-table tr.row-error td[contenteditable="true"]:focus {
+  background: rgba(220,38,38,0.1);
+  outline-color: var(--error);
+}
+table.preview-table td.cell-missing {
+  background: rgba(220,38,38,0.08) !important;
+  outline: 2px solid rgba(220,38,38,0.5) !important;
+}
+table.preview-table tr.row-ok td { background: var(--row-ok-bg); }
+
+/* 保險/產險公司：浮動帳號警示（amber） */
+table.preview-table tr.row-insurance td { background: var(--row-ins-bg); }
+table.preview-table tr.row-insurance td[contenteditable="true"]:focus {
+  background: rgba(217,119,6,0.12);
+  outline-color: var(--warning);
+}
+.insurance-badge {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 待補填 — 紅色浮水印，輸入文字後消失 */
+table.preview-table td[data-placeholder="待補填"]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--error);
+  opacity: 0.7;
+  font-style: italic;
+  pointer-events: none;
+}
+/* 清大建教合作字號提示 — 藍色浮水印 */
+table.preview-table td[data-placeholder="請填入建教合作字號"]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--accent-1);
+  opacity: 0.75;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* ── Divider label ────────────────────────────────────────────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.section-divider::before, .section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.section-divider span {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #c8d4e0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(6,139,255,0.4); }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  header { padding: 0 20px; }
+  .container { padding: 20px 14px 40px; }
+  .card { padding: 20px 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="header-brand">
+    <div class="header-logo">A</div>
+    <div>
+      <div class="header-title">銀行整批付款上傳檔產生器</div>
+      <div class="header-sub">Anivance · 財務工具</div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Step 1 -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">1</span>上傳付款資料庫</div>
+    <input type="file" id="dbFileInput" accept=".xlsx,.xls" style="display:none">
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">📂</div>
+      <div class="upload-label">點擊或拖曳上傳付款資料庫（.xlsx）</div>
+      <div class="upload-hint">所有資料在本機處理，不對外傳輸</div>
+    </div>
+    <div class="upload-status" id="uploadStatus"></div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">2</span>輸入預計付款日期</div>
+    <div class="date-row">
+      <label for="payDateInput">付款日期</label>
+      <input type="text" id="payDateInput" placeholder="YYYYMMDD" maxlength="8">
+      <span class="date-hint">格式：YYYYMMDD，例如 20260617</span>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">3</span>輸入付款明細</div>
+    <div class="detail-table-wrapper">
+      <table class="input-table" id="detailTable">
+        <thead>
+          <tr>
+            <th style="width:56px"><input type="checkbox" id="selectAllCb" title="全選／取消全選"></th>
+            <th>付款對象簡稱</th>
+            <th>金額（元）</th>
+            <th>筆數（X）</th>
+          </tr>
+        </thead>
+        <tbody id="detailBody"></tbody>
+      </table>
+    </div>
+    <div class="paste-hint" style="margin-top:10px">支援從 Excel 選取多欄（簡稱 / 金額 / 筆數）整批複製後，點選表格任一格再貼上（Ctrl+V），資料會自動填入對應欄位。</div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">4</span>執行比對</div>
+    <button class="run-btn" id="runBtn">執　行</button>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="card" id="preview-section">
+    <div class="card-title"><span class="step-badge">5</span>預覽與下載</div>
+    <div class="preview-info" id="previewInfo"></div>
+    <div class="preview-table-wrapper">
+      <table class="preview-table" id="previewTable">
+        <thead>
+          <tr>
+            <th>付款日期</th>
+            <th>付款帳號</th>
+            <th>收款總行</th>
+            <th>收款分行</th>
+            <th>收款帳號</th>
+            <th>收款戶名</th>
+            <th>付款金額</th>
+            <th>手續費負擔別</th>
+            <th>我的備註</th>
+            <th>附言</th>
+            <th>備註</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="repreview-btn" id="repreviewBtn">重新預覽（驗證欄位）</button>
+      <button class="download-btn" id="downloadBtn">下載 Excel</button>
+      <span class="filename-hint">臺幣付款檔案-整批付款明細_Leon-EXCEL.xlsx</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Floating row toolbar ──────────────────────────────────────────────────── -->
+<div class="float-toolbar">
+  <button class="float-toolbar-btn" id="addRowBtn">
+    <span class="ftb-icon">＋</span>
+    <span>新增列</span>
+  </button>
+  <div class="float-toolbar-sep"></div>
+  <button class="float-toolbar-btn" id="insertRowBtn">
+    <span class="ftb-icon">↓</span>
+    <span>插入列</span>
+  </button>
+  <button class="float-toolbar-btn danger" id="deleteRowBtn">
+    <span class="ftb-icon">✕</span>
+    <span>刪除列</span>
+  </button>
+  <button class="float-toolbar-btn" id="copyPrevBtn">
+    <span class="ftb-icon">⬆</span>
+    <span>複製列</span>
+  </button>
+</div>
+
+<script src="xlsx.full.min.js"></script>
+<script>
+// ─── Global state ────────────────────────────────────────────────────────────
+let dbRecords = [];       // 主工作表紀錄
+let dbHeaders = [];       // 主工作表欄位名
+let dbExtraRecords = [];  // 「臨時追加」工作表紀錄
+let dbExtraHeaders = [];  // 「臨時追加」工作表欄位名（結構與主表不同）
+
+// ─── Special-case alias map (hard-coded) ─────────────────────────────────────
+const ALIAS_MAP = {
+  'FedEx': '荷蘭商聯邦快遞國際股份有限公司台灣分公司',
+  '伯森生技': '伯森生物科技股份有限公司',
+  '南山產物': '南山人壽保險股份有限公司',
+  '瑞柏生技': '瑞柏生物科技股份有限公司',
+  '史泰伯': '英屬開曼群島商史泰博股份有限公司台灣分公司',
+};
+
+// ─── Upload ──────────────────────────────────────────────────────────────────
+const uploadArea = document.getElementById('uploadArea');
+const dbFileInput = document.getElementById('dbFileInput');
+const uploadStatus = document.getElementById('uploadStatus');
+
+uploadArea.addEventListener('click', () => dbFileInput.click());
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleDBFile(file);
+});
+dbFileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleDBFile(e.target.files[0]);
+});
+
+function handleDBFile(file) {
+  uploadStatus.textContent = '讀取中…';
+  uploadStatus.className = 'upload-status';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array', cellDates: true });
+
+      // ── 主工作表（第一張）────────────────────────────────────────────────
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (rows.length < 2) throw new Error('資料庫至少需要標題列與一筆資料');
+      dbHeaders = rows[0].map(h => String(h).trim());
+      dbRecords = rows.slice(1).map(row => {
+        const obj = {};
+        dbHeaders.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ''; });
+        return obj;
+      });
+
+      // ── 「臨時追加」工作表（第二張，選填）───────────────────────────────
+      dbExtraRecords = [];
+      dbExtraHeaders = [];
+      const extraSheetName = wb.SheetNames.find(n => n.includes('臨時追加'));
+      let extraMsg = '';
+      if (extraSheetName) {
+        const ws2 = wb.Sheets[extraSheetName];
+        const rows2 = XLSX.utils.sheet_to_json(ws2, { header: 1, defval: '' });
+        if (rows2.length >= 2) {
+          dbExtraHeaders = rows2[0].map(h => String(h).trim());
+          dbExtraRecords = rows2.slice(1).map(row => {
+            const obj = {};
+            dbExtraHeaders.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ''; });
+            return obj;
+          });
+          extraMsg = `；「${extraSheetName}」工作表另載入 ${dbExtraRecords.length} 筆（欄位：${dbExtraHeaders.join(' / ')}）`;
+        }
+      }
+
+      const latestDate = findLatestPayDate(dbRecords, dbHeaders);
+      uploadStatus.innerHTML =
+        `✓ 已載入「${file.name}」，共 ${dbRecords.length} 筆紀錄${extraMsg}，欄位：${dbHeaders.join(' / ')}` +
+        `<br><span style="color:#ef4444;font-weight:600;">請確認 ${file.name} 已更新為最新版本，當前最新一次付款日為 ${latestDate}</span>`;
+      uploadStatus.className = 'upload-status';
+    } catch (err) {
+      uploadStatus.textContent = '讀取失敗：' + err.message;
+      uploadStatus.className = 'upload-status error';
+      dbRecords = [];
+      dbHeaders = [];
+      dbExtraRecords = [];
+      dbExtraHeaders = [];
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function findLatestPayDate(records, headers) {
+  const dateCol = headers.find(h => h.includes('付款日期'));
+  if (!dateCol) return '（找不到付款日期欄）';
+  let latest = 0;
+  let latestRaw = null;
+  records.forEach(r => {
+    const val = r[dateCol];
+    const ts = parseDBDate(val);
+    if (ts > latest) { latest = ts; latestRaw = val; }
+  });
+  if (!latestRaw) return '（無資料）';
+  if (latestRaw instanceof Date) {
+    const y = latestRaw.getFullYear();
+    const m = String(latestRaw.getMonth() + 1).padStart(2, '0');
+    const d = String(latestRaw.getDate()).padStart(2, '0');
+    return `${y}/${m}/${d}`;
+  }
+  const s = String(latestRaw).replace(/\D/g, '');
+  if (s.length === 8) return `${s.slice(0,4)}/${s.slice(4,6)}/${s.slice(6,8)}`;
+  return String(latestRaw);
+}
+
+// ─── Detail table ─────────────────────────────────────────────────────────────
+const detailBody = document.getElementById('detailBody');
+
+function escAttr(s) {
+  return String(s).replace(/"/g, '&quot;');
+}
+
+function createRowElement(alias = '', amount = '', count = '') {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="row-num">
+      <div class="row-num-inner">
+        <input type="checkbox" class="row-cb">
+        <span class="rn"></span>
+      </div>
+    </td>
+    <td><input type="text" placeholder="簡稱" value="${escAttr(alias)}"></td>
+    <td><input type="text" placeholder="0" value="${escAttr(amount)}"></td>
+    <td><input type="text" placeholder="1" value="${escAttr(count)}"></td>
+  `;
+  return tr;
+}
+
+function addRow(alias = '', amount = '', count = '') {
+  detailBody.appendChild(createRowElement(alias, amount, count));
+}
+
+function renumberRows() {
+  Array.from(detailBody.rows).forEach((tr, i) => {
+    const rn = tr.querySelector('.rn');
+    if (rn) rn.textContent = i + 1;
+  });
+}
+
+function syncSelectAll() {
+  const cbs = Array.from(detailBody.querySelectorAll('.row-cb'));
+  const selectAllCb = document.getElementById('selectAllCb');
+  const anyChecked = cbs.some(cb => cb.checked);
+  const allChecked = cbs.length > 0 && cbs.every(cb => cb.checked);
+  selectAllCb.checked = allChecked;
+  selectAllCb.indeterminate = anyChecked && !allChecked;
+}
+
+// ─── Select-all checkbox ──────────────────────────────────────────────────────
+document.getElementById('selectAllCb').addEventListener('change', function() {
+  Array.from(detailBody.rows).forEach(tr => {
+    const cb = tr.querySelector('.row-cb');
+    if (cb) {
+      cb.checked = this.checked;
+      tr.classList.toggle('row-selected', this.checked);
+    }
+  });
+});
+
+// ─── Row checkbox (delegated) ─────────────────────────────────────────────────
+detailBody.addEventListener('change', function(e) {
+  if (!e.target.classList.contains('row-cb')) return;
+  e.target.closest('tr').classList.toggle('row-selected', e.target.checked);
+  syncSelectAll();
+});
+
+// ─── Paste handler (delegated on tbody) ──────────────────────────────────────
+detailBody.addEventListener('paste', function(e) {
+  const target = e.target;
+  if (target.tagName !== 'INPUT' || target.type !== 'text') return;
+
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  const lines = text.split(/\r?\n/).filter(l => l !== '');
+
+  if (lines.length === 1 && !lines[0].includes('\t')) return;
+
+  e.preventDefault();
+
+  const pastedRows = lines.map(l => l.split('\t'));
+
+  const allRows = Array.from(detailBody.rows);
+  let startRowIdx = -1;
+  let startColIdx = -1;
+  outer: for (let ri = 0; ri < allRows.length; ri++) {
+    const inputs = Array.from(allRows[ri].querySelectorAll('input[type=text]'));
+    for (let ci = 0; ci < inputs.length; ci++) {
+      if (inputs[ci] === target) { startRowIdx = ri; startColIdx = ci; break outer; }
+    }
+  }
+  if (startRowIdx < 0) return;
+
+  pastedRows.forEach((cols, ri) => {
+    const targetRowIdx = startRowIdx + ri;
+    while (detailBody.rows.length <= targetRowIdx) addRow();
+    const inputs = Array.from(detailBody.rows[targetRowIdx].querySelectorAll('input[type=text]'));
+    cols.forEach((val, ci) => {
+      const targetColIdx = startColIdx + ci;
+      if (targetColIdx < inputs.length) inputs[targetColIdx].value = val.trim();
+    });
+  });
+
+  renumberRows();
+});
+
+// ─── Toolbar buttons ──────────────────────────────────────────────────────────
+document.getElementById('addRowBtn').addEventListener('click', () => {
+  addRow(); renumberRows();
+});
+
+document.getElementById('insertRowBtn').addEventListener('click', () => {
+  const rows = Array.from(detailBody.rows);
+  let lastIdx = -1;
+  rows.forEach((tr, i) => { if (tr.querySelector('.row-cb')?.checked) lastIdx = i; });
+  const newTr = createRowElement();
+  if (lastIdx === -1) {
+    detailBody.appendChild(newTr);
+  } else {
+    const ref = detailBody.rows[lastIdx];
+    detailBody.insertBefore(newTr, ref.nextSibling);
+  }
+  renumberRows();
+});
+
+document.getElementById('deleteRowBtn').addEventListener('click', () => {
+  const selected = Array.from(detailBody.rows).filter(tr => tr.querySelector('.row-cb')?.checked);
+  if (selected.length === 0) { alert('請先勾選要刪除的列。'); return; }
+  selected.forEach(tr => tr.remove());
+  renumberRows();
+  syncSelectAll();
+});
+
+document.getElementById('copyPrevBtn').addEventListener('click', () => {
+  const rows = Array.from(detailBody.rows);
+  const selected = rows.filter(tr => tr.querySelector('.row-cb')?.checked);
+  if (selected.length === 0) { alert('請先勾選要複製的列。'); return; }
+  // 由下往上處理，避免插入後 index 偏移
+  [...selected].reverse().forEach(tr => {
+    const vals = Array.from(tr.querySelectorAll('input[type=text]')).map(inp => inp.value);
+    const newTr = createRowElement(...vals);
+    detailBody.insertBefore(newTr, tr.nextSibling);
+  });
+  renumberRows();
+});
+
+addRow();
+renumberRows();
+
+// ─── Run ──────────────────────────────────────────────────────────────────────
+document.getElementById('runBtn').addEventListener('click', runGenerate);
+
+function runGenerate() {
+  const payDate = document.getElementById('payDateInput').value.trim();
+  if (!/^\d{8}$/.test(payDate)) {
+    alert('請輸入正確的付款日期（YYYYMMDD，8位數字）。');
+    return;
+  }
+  if (dbRecords.length === 0) {
+    alert('請先上傳付款資料庫。');
+    return;
+  }
+
+  const details = [];
+  Array.from(detailBody.rows).forEach(tr => {
+    const inputs = tr.querySelectorAll('input[type=text]');
+    const alias = inputs[0].value.trim();
+    const amount = inputs[1].value.trim().replace(/,/g, '');
+    const count = inputs[2].value.trim();
+    if (alias || amount) details.push({ alias, amount, count });
+  });
+
+  if (details.length === 0) {
+    alert('請至少輸入一筆付款明細。');
+    return;
+  }
+
+  const colMap = detectColumns(dbHeaders);
+
+  const successRecords = dbRecords.filter(r => {
+    const statusVal = String(r[colMap.status] || '').trim();
+    return statusVal === '交易成功';
+  });
+
+  const outputRows = details.map(d => generateRow(d, payDate, successRecords, colMap));
+
+  renderPreview(outputRows);
+}
+
+// ─── Column detection ─────────────────────────────────────────────────────────
+function detectColumns(headers) {
+  const find = (keywords) => {
+    for (const kw of keywords) {
+      const h = headers.find(h => h.includes(kw));
+      if (h) return h;
+    }
+    return null;
+  };
+
+  return {
+    payDate:  find(['付款日期']),
+    status:   headers[headers.length - 1],
+    payAcct:  find(['付款帳號']),
+    rcvBank:  find(['收款銀行']),
+    rcvName:  find(['收款人統編', '收款人']),
+  };
+}
+
+// ─── Row generation ───────────────────────────────────────────────────────────
+function generateRow(detail, payDate, successRecords, colMap) {
+  const { alias, amount, count } = detail;
+
+  const match = findRecord(alias, successRecords, colMap);
+
+  const INSURANCE_KEYWORDS = ['保險', '產險', '人壽', '壽險', '再保', '意外險'];
+  const isInsurance = INSURANCE_KEYWORDS.some(kw => alias.includes(kw)) ||
+    (match && INSURANCE_KEYWORDS.some(kw =>
+      String(match[colMap.rcvName] || '').includes(kw)
+    ));
+
+  const NTHU_KEYWORDS = ['清大', '清華', '國立清華'];
+  const rcvNameStr = match ? String(match[colMap.rcvName] || '') : '';
+  const isNTHU = NTHU_KEYWORDS.some(kw => alias.includes(kw) || rcvNameStr.includes(kw));
+
+  const row = {
+    alias,
+    error: !match,
+    isInsurance,
+    isNTHU,
+    payDate,
+    payAcct: '1377940172676',
+    rcvMain: '',
+    rcvSub: '',
+    rcvAcct: '',
+    rcvName: '',
+    amount: amount.replace(/,/g, ''),
+    fee: '0',
+    myNote: isNTHU ? '' : `${alias}共${count}筆`,
+    remark: isNTHU ? '' : normalizeFullHalf(`久浪共${count}筆`),
+    note: '',
+  };
+
+  if (match) {
+    if (match._fromExtra) {
+      // 臨時追加：欄位已預先解析好，直接帶入
+      row.rcvMain = match.rcvMain;
+      row.rcvSub  = match.rcvSub;
+      row.rcvAcct = match.rcvAcct;
+      row.rcvName = match.rcvName;
+    } else {
+      // 主工作表：解析多行格式
+      const payAcctRaw = String(match[colMap.payAcct] || '');
+      row.payAcct = extractNumbers(payAcctRaw);
+
+      const rcvBankRaw = String(match[colMap.rcvBank] || '');
+      const bankLines = rcvBankRaw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const bankCode = extractNumbers(bankLines[0] || '');
+      if (bankCode.length === 7) {
+        row.rcvMain = bankCode.substring(0, 3);
+        row.rcvSub  = bankCode.substring(3);
+      } else {
+        row.rcvMain = bankCode;
+        row.rcvSub  = '';
+      }
+      row.rcvAcct = extractNumbers(bankLines[2] || '');
+
+      const rcvNameRaw = String(match[colMap.rcvName] || '');
+      row.rcvName = rcvNameRaw.replace(/\d+/g, '').trim();
+    }
+  }
+
+  return row;
+}
+
+// ─── Fuzzy match ──────────────────────────────────────────────────────────────
+function findRecord(alias, records, colMap) {
+  // 臨時追加優先（含已更新帳號），找不到才查主表
+  const extra = findInExtra(alias);
+  if (extra) return extra;
+
+  return searchInRecords(alias, records, colMap);
+}
+
+// 搜尋臨時追加工作表（欄位：簡稱/收款總行/收款分行/收款帳號/收款戶名）
+// 回傳 { _fromExtra, rcvMain, rcvSub, rcvAcct, rcvName } 或 null
+function findInExtra(alias) {
+  if (dbExtraRecords.length === 0 || dbExtraHeaders.length < 5) return null;
+  const targetName = ALIAS_MAP[alias] || null;
+
+  const colShort = dbExtraHeaders[0]; // 簡稱
+  const colMain  = dbExtraHeaders[1]; // 收款總行
+  const colSub   = dbExtraHeaders[2]; // 收款分行
+  const colAcct  = dbExtraHeaders[3]; // 收款帳號
+  const colName  = dbExtraHeaders[4]; // 收款戶名
+
+  const getShort = r => String(r[colShort] || '').trim();
+  const getName  = r => String(r[colName]  || '').trim();
+
+  // 1. 簡稱完全吻合
+  let match = dbExtraRecords.find(r => getShort(r) === alias);
+  // 2. ALIAS_MAP 對應的全名
+  if (!match && targetName) match = dbExtraRecords.find(r => getShort(r) === targetName || getName(r) === targetName);
+  // 3. 收款戶名包含簡稱
+  if (!match) match = dbExtraRecords.find(r => getName(r).includes(alias));
+  // 4. 簡稱包含收款戶名關鍵字（反向）
+  if (!match) match = dbExtraRecords.find(r => alias.includes(getShort(r)) && getShort(r).length > 0);
+
+  if (!match) return null;
+
+  return {
+    _fromExtra: true,
+    rcvMain: extractNumbers(String(match[colMain] || '')).slice(0, 3),
+    rcvSub:  extractNumbers(String(match[colSub]  || '')).slice(0, 4),
+    rcvAcct: extractNumbers(String(match[colAcct] || '')),
+    rcvName: getName(match),
+  };
+}
+
+function searchInRecords(alias, records, colMap) {
+  const targetName = ALIAS_MAP[alias] || null;
+  const getName = r => String(r[colMap.rcvName] || '').replace(/\d+/g, '').trim();
+
+  let candidates;
+  if (targetName) {
+    candidates = records.filter(r => getName(r) === targetName);
+    if (candidates.length === 0) candidates = records.filter(r => getName(r).includes(alias));
+  } else {
+    candidates = records.filter(r => getName(r) === alias);
+    if (candidates.length === 0) candidates = records.filter(r => getName(r).includes(alias));
+    if (candidates.length === 0) candidates = records.filter(r => alias.includes(getName(r)) && getName(r).length > 0);
+  }
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => parseDBDate(b[colMap.payDate]) - parseDBDate(a[colMap.payDate]));
+  return candidates[0];
+}
+
+function parseDBDate(val) {
+  if (!val) return 0;
+  if (val instanceof Date) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return parseInt(`${y}${m}${d}`, 10);
+  }
+  const s = String(val).replace(/\D/g, '');
+  if (s.length === 8) return parseInt(s, 10);
+  return 0;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function extractNumbers(s) {
+  return String(s).replace(/\D/g, '');
+}
+
+// 保險列：首鍵清空現有內容；三欄填完後移除 ⚠ 標籤
+function applyInsuranceClear(td, tr) {
+  let cleared = false;
+
+  // 點擊（focus）時立即清空
+  td.addEventListener('focus', function() {
+    if (!cleared) { td.textContent = ''; cleared = true; }
+  });
+
+  // 貼上時也先清空
+  td.addEventListener('paste', function() {
+    if (!cleared) { td.textContent = ''; cleared = true; }
+  }, { capture: true });
+
+  // 每次輸入後檢查：總行(col2)非空 且 帳號(col4)非空 → 淡出移除標籤
+  td.addEventListener('input', function() { checkInsuranceBadge(tr); });
+}
+
+function checkInsuranceBadge(tr) {
+  const main = tr.cells[2] ? tr.cells[2].textContent.trim() : '';
+  const acct = tr.cells[4] ? tr.cells[4].textContent.trim() : '';
+  if (main.length > 0 && acct.length > 0) {
+    const badge = tr.querySelector('.insurance-badge');
+    if (badge) {
+      badge.style.transition = 'opacity 0.4s';
+      badge.style.opacity = '0';
+      setTimeout(() => badge.remove(), 420);
+    }
+  }
+}
+
+// Restrict a contenteditable td to digits only, up to maxLen characters
+function applyDigitLimit(td, maxLen) {
+  td.addEventListener('input', function() {
+    const sel = window.getSelection();
+    const offset = sel.focusOffset;
+    const cleaned = td.textContent.replace(/\D/g, '').slice(0, maxLen);
+    if (td.textContent !== cleaned) {
+      td.textContent = cleaned;
+      const range = document.createRange();
+      const textNode = td.firstChild;
+      if (textNode) {
+        const pos = Math.min(offset, cleaned.length);
+        range.setStart(textNode, pos);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+  });
+  td.addEventListener('keydown', function(e) {
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Home','End','Tab'];
+    if (allowed.includes(e.key)) return;
+    if (e.ctrlKey || e.metaKey) return;
+    if (!/^\d$/.test(e.key)) { e.preventDefault(); return; }
+    if (td.textContent.length >= maxLen && !window.getSelection().toString()) e.preventDefault();
+  });
+}
+
+// Convert full-width English to half-width, keep Chinese full-width
+function normalizeFullHalf(s) {
+  return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+}
+
+// ─── Render preview ───────────────────────────────────────────────────────────
+const PREVIEW_COLS = ['付款日期','付款帳號','收款總行','收款分行','收款帳號','收款戶名','付款金額','手續費負擔別','我的備註','附言','備註'];
+
+function renderPreview(rows) {
+  const tbody = document.getElementById('previewBody');
+  tbody.innerHTML = '';
+  const errCount = rows.filter(r => r.error).length;
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.error) tr.classList.add('row-error');
+    if (row.isInsurance) tr.classList.add('row-insurance');
+
+    const vals = [
+      row.payDate, row.payAcct, row.rcvMain, row.rcvSub, row.rcvAcct,
+      row.rcvName,
+      row.amount, row.fee, row.myNote, row.remark, row.note,
+    ];
+
+    vals.forEach((v, i) => {
+      const td = document.createElement('td');
+      td.setAttribute('contenteditable', 'true');
+      const isEmpty = !String(v).trim();
+      if (row.error && isEmpty && REQUIRED_COLS.includes(i)) {
+        td.dataset.placeholder = '待補填';
+      } else {
+        td.textContent = v;
+      }
+      // 清大：備註(8)、附言(9) 留空等待手填建教合作字號
+      if (row.isNTHU && (i === 8 || i === 9)) {
+        td.dataset.placeholder = '請填入建教合作字號';
+      }
+      // 保險公司警示標籤，貼在收款戶名欄右側
+      if (i === 5 && row.isInsurance) {
+        const badge = document.createElement('span');
+        badge.className = 'insurance-badge';
+        badge.textContent = '⚠ 確認帳號';
+        td.appendChild(badge);
+      }
+      if (i === 2) applyDigitLimit(td, 3);
+      if (i === 3) applyDigitLimit(td, 4);
+      // 保險列：總行(2)、分行(3)、帳號(4) 首鍵清空，三欄填完後自動移除警示標籤
+      if (row.isInsurance && (i === 2 || i === 3 || i === 4)) {
+        applyInsuranceClear(td, tr);
+      }
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  const info = document.getElementById('previewInfo');
+  info.innerHTML = `共 <span class="count">${rows.length}</span> 筆` +
+    (errCount > 0 ? `，其中 <span class="err">${errCount}</span> 筆比對不到（標紅），請手動補填。` : '，全部比對成功。');
+
+  document.getElementById('preview-section').style.display = 'block';
+  document.getElementById('preview-section').scrollIntoView({ behavior: 'smooth' });
+
+  document.getElementById('previewBody').addEventListener('input', function(e) {
+    const td = e.target.closest('td[contenteditable]');
+    if (!td) return;
+    if (!td.textContent.trim()) td.innerHTML = '';
+  }, { once: false });
+}
+
+// ─── Re-preview / validate ────────────────────────────────────────────────────
+const REQUIRED_COLS = [0, 1, 2, 4, 5, 6];
+
+document.getElementById('repreviewBtn').addEventListener('click', revalidatePreview);
+
+function revalidatePreview() {
+  const tbody = document.getElementById('previewBody');
+  let missingRows = 0;
+
+  Array.from(tbody.rows).forEach(tr => {
+    tr.classList.remove('row-error', 'row-ok');
+    Array.from(tr.cells).forEach(td => {
+      td.classList.remove('cell-missing');
+      delete td.dataset.placeholder;
+    });
+
+    let rowHasMissing = false;
+    REQUIRED_COLS.forEach(ci => {
+      const td = tr.cells[ci];
+      if (!td) return;
+      if (!td.textContent.trim()) {
+        td.classList.add('cell-missing');
+        td.dataset.placeholder = '待補填';
+        rowHasMissing = true;
+      }
+    });
+
+    if (rowHasMissing) {
+      tr.classList.add('row-error');
+      missingRows++;
+    } else {
+      tr.classList.add('row-ok');
+    }
+  });
+
+  const total = tbody.rows.length;
+  const info = document.getElementById('previewInfo');
+  if (missingRows === 0) {
+    info.innerHTML = `✓ 共 <span class="count">${total}</span> 筆，所有必填欄位已填寫完畢，可以下載。`;
+  } else {
+    info.innerHTML = `共 <span class="count">${total}</span> 筆，尚有 <span class="err">${missingRows}</span> 筆有必填欄位未填（紅框標示），請補填後再試。`;
+  }
+}
+
+// ─── Download ─────────────────────────────────────────────────────────────────
+document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
+
+// 半形 ASCII → 全形 Unicode（銀行附言欄位需全形）
+function toFullWidth(str) {
+  return str.replace(/[\x20-\x7E]/g, c => {
+    const code = c.charCodeAt(0);
+    return code === 0x20
+      ? '　'                          // 半形空格 → 全形空格
+      : String.fromCharCode(code + 0xFEE0); // 其餘 ASCII → 全形
+  });
+}
+
+function downloadExcel() {
+  const tbody = document.getElementById('previewBody');
+  const hasIssue = Array.from(tbody.rows).some(tr =>
+    REQUIRED_COLS.some(ci => {
+      const td = tr.cells[ci];
+      return td && !td.textContent.trim();
+    })
+  );
+  if (hasIssue) {
+    revalidatePreview();
+    alert('仍有必填欄位未填寫（紅框標示），請補填後再下載。');
+    return;
+  }
+  const data = [PREVIEW_COLS];
+
+  const FUWID_COL = 9; // 附言欄位索引
+  Array.from(tbody.rows).forEach(tr => {
+    const row = Array.from(tr.cells).map((td, ci) => {
+      const val = td.innerText.replace(/待補填/g, '').trim();
+      return ci === FUWID_COL ? toFullWidth(val) : val;
+    });
+    data.push(row);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [10,18,8,8,18,20,12,12,24,18,10].map(w => ({ wch: w }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '整批付款明細');
+  const datePrefix = (document.getElementById('payDateInput').value.trim().match(/^\d{8}$/) || [''])[0];
+  XLSX.writeFile(wb, `${datePrefix}臺幣付款檔案-整批付款明細_Leon-EXCEL.xls`, { bookType: 'xls' });
+}
+</script>
+</body>
+</html>
