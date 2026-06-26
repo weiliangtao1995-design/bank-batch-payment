@@ -683,6 +683,11 @@ table.preview-table td[data-placeholder="請填入建教合作字號"]:empty::be
 
 <script src="xlsx.full.min.js"></script>
 <script>
+if (typeof XLSX === 'undefined') {
+  document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+}
+</script>
+<script>
 // ─── Global state ────────────────────────────────────────────────────────────
 let dbRecords = [];       // 主工作表紀錄
 let dbHeaders = [];       // 主工作表欄位名
@@ -1343,12 +1348,19 @@ function downloadExcel() {
   }
   const data = [PREVIEW_COLS];
 
-  const FUWID_COL = 9; // 附言欄位索引
+  const FUWID_COL = 9;  // 附言欄位索引
+  const RCVNAME_COL = 5; // 收款戶名欄位索引
+  const RCVMAIN_COL = 2; // 收款總行欄位索引
+  const RCVSUB_COL  = 3; // 收款分行欄位索引
   Array.from(tbody.rows).forEach(tr => {
     const row = Array.from(tr.cells).map((td, ci) => {
       const val = td.innerText.replace(/待補填/g, '').trim();
-      return ci === FUWID_COL ? toFullWidth(val) : val;
+      if (ci === FUWID_COL) return toFullWidth(val);
+      if (ci === RCVNAME_COL) return val.replace(/\d/g, c => String.fromCharCode(c.charCodeAt(0) + 0xFEE0));
+      return val;
     });
+    // 收款總行=700 且 收款分行為空 → 自動補 0021
+    if (row[RCVMAIN_COL] === '700' && !row[RCVSUB_COL]) row[RCVSUB_COL] = '0021';
     data.push(row);
   });
 
