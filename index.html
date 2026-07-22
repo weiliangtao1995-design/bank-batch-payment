@@ -12,15 +12,15 @@
   /* Anivance 品牌色（淺色模式）*/
   --bg:           #F2F4F8;
   --bg-2:         #EAECF2;
-  --border:       #ECECEC;
+  --border:       #E4E9F1;   /* 中性灰，微偏品牌藍調 */
   --border-glow:  rgba(64,220,255,0.4);
   --accent-1:     #068bff;
   --accent-2:     #40DCFF;
   --grad:         linear-gradient(90deg, #40DCFF 0%, #068bff 100%);
   --grad-rev:     linear-gradient(90deg, #068bff 0%, #40DCFF 100%);
   --text:         #0A0A0A;
-  --text-sub:     #515151;
-  --text-muted:   #a0a0a0;
+  --text-sub:     #4A5568;   /* 次要文字，帶一絲藍調的深灰 */
+  --text-muted:   #98A2B3;
   --success:      #00C853;
   --error:        #FB2C36;
   --warning:      #F59E0B;
@@ -29,6 +29,10 @@
   --row-ins-bg:   rgba(245,158,11,0.07);
   --radius:       14px;
   --radius-sm:    8px;
+  /* 統一的陰影語言：帶微藍調、克制的層次 */
+  --shadow-sm:     0 1px 2px rgba(16,42,67,0.04), 0 1px 3px rgba(16,42,67,0.03);
+  --shadow-md:     0 2px 8px rgba(6,139,255,0.06), 0 10px 28px rgba(16,42,67,0.06);
+  --shadow-accent: 0 4px 16px rgba(6,139,255,0.28);
 }
 
 html { scroll-behavior: smooth; }
@@ -48,7 +52,7 @@ header {
   z-index: 10;
   background: #ffffff;
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-sm);
   padding: 0 40px;
   height: 64px;
   display: flex;
@@ -112,20 +116,19 @@ header {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 28px 32px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
-  transition: border-color 0.25s, box-shadow 0.25s;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
 }
 .card:hover {
   border-color: rgba(64,220,255,0.35);
-  box-shadow: 0 2px 8px rgba(6,139,255,0.08), 0 8px 24px rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-md);
 }
 
 .card-title {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-sub);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.3px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -142,7 +145,7 @@ header {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(6,139,255,0.35);
+  box-shadow: 0 2px 8px rgba(6,139,255,0.3);
 }
 
 /* ── Upload ───────────────────────────────────────────────────────────────── */
@@ -195,6 +198,8 @@ header {
   width: 180px;
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
 }
 .date-row input::placeholder { color: var(--text-muted); }
 .date-row input:focus {
@@ -216,13 +221,12 @@ table.input-table th {
   background: rgba(64,220,255,0.08);
   color: var(--accent-1);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
   padding: 11px 14px;
   text-align: left;
   border-bottom: 2px solid rgba(6,139,255,0.15);
   white-space: nowrap;
-  text-transform: uppercase;
 }
 table.input-table td {
   border-bottom: 1px solid var(--border);
@@ -239,6 +243,7 @@ table.input-table td input {
   background: transparent;
   outline: none;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 table.input-table td input::placeholder { color: var(--text-muted); }
 table.input-table td input:focus {
@@ -293,7 +298,7 @@ table.input-table tr.row-selected td {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 10px 8px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-md);
 }
 .float-toolbar-btn {
   display: flex;
@@ -372,15 +377,34 @@ table.input-table tr.row-selected td {
   font-family: inherit;
   letter-spacing: 0.5px;
   transition: opacity 0.2s, box-shadow 0.2s, transform 0.15s;
-  box-shadow: 0 4px 20px rgba(6,139,255,0.3);
+  box-shadow: var(--shadow-accent);
 }
 .run-btn:hover {
   opacity: 0.92;
-  box-shadow: 0 6px 28px rgba(6,139,255,0.45);
+  box-shadow: 0 6px 28px rgba(6,139,255,0.42);
   transform: translateY(-1px);
 }
 .run-btn:active { transform: translateY(0); }
 .run-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ── 鍵盤可見焦點 & 動態偏好 ──────────────────────────────────────────────── */
+.run-btn:focus-visible,
+.repreview-btn:focus-visible,
+.download-btn:focus-visible,
+.add-row-btn:focus-visible,
+.float-toolbar-btn:focus-visible,
+.upload-area:focus-visible {
+  outline: 2px solid var(--accent-1);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 .repreview-btn {
   background: #fffbeb;
@@ -455,9 +479,8 @@ table.preview-table th {
   background: linear-gradient(90deg, rgba(64,220,255,0.12), rgba(6,139,255,0.08));
   color: var(--accent-1);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.2px;
   padding: 10px 10px;
   white-space: nowrap;
   border-bottom: 2px solid rgba(6,139,255,0.15);
@@ -468,6 +491,7 @@ table.preview-table td {
   padding: 5px 7px;
   vertical-align: middle;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 table.preview-table tbody tr:hover td { background: rgba(64,220,255,0.04); }
 table.preview-table td[contenteditable="true"] {
@@ -500,6 +524,26 @@ table.preview-table tr.row-insurance td[contenteditable="true"]:focus {
   outline-color: var(--warning);
 }
 .insurance-badge {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 墨城智權 / 墨耕法律：多匯款帳號提醒（amber，保留自動帶入的帳號，只提醒確認） */
+table.preview-table tr.row-multiacct td { background: var(--row-ins-bg); }
+table.preview-table tr.row-multiacct td[contenteditable="true"]:focus {
+  background: rgba(217,119,6,0.12);
+  outline-color: var(--warning);
+}
+.multiacct-badge {
   display: inline-block;
   background: #fef3c7;
   color: #92400e;
@@ -1015,10 +1059,15 @@ function generateRow(detail, payDate, successRecords, colMap) {
   const rcvNameStr = match ? String(match[colMap.rcvName] || '') : '';
   const isNTHU = NTHU_KEYWORDS.some(kw => alias.includes(kw) || rcvNameStr.includes(kw));
 
+  // 墨城智權 / 墨耕法律：可能有多個匯款帳號，保留自動帶入帳號，僅跳提醒確認
+  const MULTIACCT_KEYWORDS = ['墨城', '墨耕'];
+  const isMultiAcct = MULTIACCT_KEYWORDS.some(kw => alias.includes(kw) || rcvNameStr.includes(kw));
+
   const row = {
     alias,
     error: !match,
     isInsurance,
+    isMultiAcct,
     isNTHU,
     payDate,
     payAcct: '1377940172676',
@@ -1223,6 +1272,7 @@ function renderPreview(rows) {
     const tr = document.createElement('tr');
     if (row.error) tr.classList.add('row-error');
     if (row.isInsurance) tr.classList.add('row-insurance');
+    if (row.isMultiAcct) tr.classList.add('row-multiacct');
 
     const vals = [
       row.payDate, row.payAcct, row.rcvMain, row.rcvSub, row.rcvAcct,
@@ -1248,6 +1298,13 @@ function renderPreview(rows) {
         const badge = document.createElement('span');
         badge.className = 'insurance-badge';
         badge.textContent = '⚠ 確認帳號';
+        td.appendChild(badge);
+      }
+      // 墨城智權／墨耕法律：多匯款帳號提醒標籤（保留帶入帳號，不清空）
+      if (i === 5 && row.isMultiAcct) {
+        const badge = document.createElement('span');
+        badge.className = 'multiacct-badge';
+        badge.textContent = '⚠ 多帳號請確認';
         td.appendChild(badge);
       }
       if (i === 2) applyDigitLimit(td, 3);
